@@ -45,7 +45,7 @@ export default function TouchControls({ onLook }: TouchControlsProps) {
   if (!isTouch) return null;
 
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none">
+    <div className="fixed inset-0 z-5 pointer-events-none">
       <div
         className="absolute inset-0 pointer-events-auto"
         style={{ touchAction: 'none' }}
