@@ -12,15 +12,108 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Safe area padding for iPhone notch/home indicator */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Save animation keyframes */
+@keyframes shrink-fly {
+  0% {
+    transform: scale(1) translate(0, 0);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(0.3) translate(40vw, -40vh);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.1) translate(45vw, -45vh);
+    opacity: 0;
+  }
+}
+
+@keyframes confetti-pop {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0);
+    opacity: 0;
+  }
+}
+
+.animate-shrink-fly {
+  animation: shrink-fly 1.2s ease-in-out forwards;
+}
+
+.animate-confetti {
+  animation: confetti-pop 1.2s ease-out forwards;
+}
+
+/* Bottom sheet */
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.bottom-sheet {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Potion pour animation */
+@keyframes pour-left {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(45deg); }
+}
+
+@keyframes pour-right {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-45deg); }
+}
+
+.pour-left {
+  animation: pour-left 0.8s ease-in-out;
+  transform-origin: bottom center;
+}
+
+.pour-right {
+  animation: pour-right 0.8s ease-in-out;
+  transform-origin: bottom center;
+}
+
+/* Joystick */
+.joystick-outer {
+  width: 80px;
+  height: 80px;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  position: relative;
+}
+
+.joystick-inner {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }

@@ -1,65 +1,115 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+import { BRUSH_THICK } from '@/lib/constants';
+import type { Tool } from '@/types';
+import { usePlayerName } from '@/hooks/usePlayerName';
+import { useDrawings } from '@/hooks/useDrawings';
+import { useTouchPrevention } from '@/hooks/useTouchPrevention';
+import NameEntryModal from '@/components/shared/NameEntryModal';
+import Toolbar from '@/components/canvas/Toolbar';
+import SaveAnimation from '@/components/canvas/SaveAnimation';
+
+const DrawingCanvas = dynamic(() => import('@/components/canvas/DrawingCanvas'), {
+  ssr: false,
+});
+
+interface CanvasHandle {
+  getDataUrl: () => string;
+  clear: () => void;
+  getCanvas: () => unknown | null;
+}
+
+function randomColor(): string {
+  const hue = Math.floor(Math.random() * 360);
+  return `hsl(${hue}, 80%, 55%)`;
+}
+
+export default function DrawPage() {
+  const { name, loaded, setName } = usePlayerName();
+  const { saveDrawing } = useDrawings();
+  useTouchPrevention();
+
+  const canvasRef = useRef<CanvasHandle>(null);
+
+  const [color, setColor] = useState(randomColor);
+  const [brushSize, setBrushSize] = useState(BRUSH_THICK);
+  const [sparkleEnabled, setSparkleEnabled] = useState(false);
+  const [activeTool, setActiveTool] = useState<Tool>('draw');
+  const [activeStamp, setActiveStamp] = useState<string | null>(null);
+  const [activeEmoji, setActiveEmoji] = useState<string | null>(null);
+  const [saveDataUrl, setSaveDataUrl] = useState<string | null>(null);
+
+  const handleKeep = useCallback(async () => {
+    if (!canvasRef.current) return;
+    const dataUrl = canvasRef.current.getDataUrl();
+    setSaveDataUrl(dataUrl);
+
+    await saveDrawing({
+      name: name || 'Untitled',
+      dataUrl,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      createdAt: Date.now(),
+    });
+  }, [name, saveDrawing]);
+
+  const handleErase = useCallback(() => {
+    canvasRef.current?.clear();
+  }, []);
+
+  const handleSaveComplete = useCallback(() => {
+    setSaveDataUrl(null);
+    canvasRef.current?.clear();
+  }, []);
+
+  const handleStampPlaced = useCallback(() => {
+    // Keep stamp tool active for multiple placements
+  }, []);
+
+  const handleEmojiPlaced = useCallback(() => {
+    // Keep emoji tool active for multiple placements
+  }, []);
+
+  if (!loaded) return null;
+
+  if (!name) {
+    return <NameEntryModal onSubmit={setName} />;
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="relative w-full h-full bg-white">
+      <DrawingCanvas
+        ref={canvasRef}
+        color={color}
+        brushSize={brushSize}
+        sparkleEnabled={sparkleEnabled}
+        activeTool={activeTool}
+        activeStamp={activeStamp}
+        activeEmoji={activeEmoji}
+        onStampPlaced={handleStampPlaced}
+        onEmojiPlaced={handleEmojiPlaced}
+      />
+      <Toolbar
+        color={color}
+        brushSize={brushSize}
+        sparkleEnabled={sparkleEnabled}
+        activeTool={activeTool}
+        activeStamp={activeStamp}
+        activeEmoji={activeEmoji}
+        onColorChange={setColor}
+        onBrushSizeChange={setBrushSize}
+        onSparkleToggle={() => setSparkleEnabled(prev => !prev)}
+        onToolChange={setActiveTool}
+        onStampSelect={setActiveStamp}
+        onEmojiSelect={setActiveEmoji}
+        onKeep={handleKeep}
+        onErase={handleErase}
+      />
+      {saveDataUrl && (
+        <SaveAnimation dataUrl={saveDataUrl} onComplete={handleSaveComplete} />
+      )}
     </div>
   );
 }
