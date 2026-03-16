@@ -10,8 +10,7 @@ interface PictureFrameProps {
   rotation: [number, number, number];
 }
 
-const FRAME_WIDTH = 2.5;
-const FRAME_HEIGHT = 2;
+const MAX_DIM = 2.5;
 const FRAME_DEPTH = 0.08;
 const BORDER = 0.12;
 const GOLD = '#DAA520';
@@ -32,38 +31,48 @@ export default function PictureFrame({ drawing, position, rotation }: PictureFra
     return tex;
   }, [drawing.dataUrl]);
 
-  const innerW = FRAME_WIDTH - BORDER * 2;
-  const innerH = FRAME_HEIGHT - BORDER * 2;
+  const aspect = (drawing.width || 1) / (drawing.height || 1);
+  let frameWidth: number, frameHeight: number;
+  if (aspect >= 1) {
+    frameWidth = MAX_DIM;
+    frameHeight = MAX_DIM / aspect;
+  } else {
+    frameHeight = MAX_DIM;
+    frameWidth = MAX_DIM * aspect;
+  }
+
+  const innerW = frameWidth - BORDER * 2;
+  const innerH = frameHeight - BORDER * 2;
 
   return (
     <group position={position} rotation={rotation}>
       {/* Back plate */}
       <mesh position={[0, 0, -FRAME_DEPTH / 2]}>
-        <boxGeometry args={[FRAME_WIDTH, FRAME_HEIGHT, 0.02]} />
+        <boxGeometry args={[frameWidth, frameHeight, 0.02]} />
         <meshStandardMaterial color="#222222" />
       </mesh>
 
       {/* Frame border - top */}
-      <mesh position={[0, FRAME_HEIGHT / 2 - BORDER / 2, 0]}>
-        <boxGeometry args={[FRAME_WIDTH, BORDER, FRAME_DEPTH]} />
+      <mesh position={[0, frameHeight / 2 - BORDER / 2, 0]}>
+        <boxGeometry args={[frameWidth, BORDER, FRAME_DEPTH]} />
         <meshStandardMaterial color={GOLD} metalness={0.6} roughness={0.3} />
       </mesh>
 
       {/* Frame border - bottom */}
-      <mesh position={[0, -FRAME_HEIGHT / 2 + BORDER / 2, 0]}>
-        <boxGeometry args={[FRAME_WIDTH, BORDER, FRAME_DEPTH]} />
+      <mesh position={[0, -frameHeight / 2 + BORDER / 2, 0]}>
+        <boxGeometry args={[frameWidth, BORDER, FRAME_DEPTH]} />
         <meshStandardMaterial color={GOLD} metalness={0.6} roughness={0.3} />
       </mesh>
 
       {/* Frame border - left */}
-      <mesh position={[-FRAME_WIDTH / 2 + BORDER / 2, 0, 0]}>
-        <boxGeometry args={[BORDER, FRAME_HEIGHT - BORDER * 2, FRAME_DEPTH]} />
+      <mesh position={[-frameWidth / 2 + BORDER / 2, 0, 0]}>
+        <boxGeometry args={[BORDER, frameHeight - BORDER * 2, FRAME_DEPTH]} />
         <meshStandardMaterial color={GOLD} metalness={0.6} roughness={0.3} />
       </mesh>
 
       {/* Frame border - right */}
-      <mesh position={[FRAME_WIDTH / 2 - BORDER / 2, 0, 0]}>
-        <boxGeometry args={[BORDER, FRAME_HEIGHT - BORDER * 2, FRAME_DEPTH]} />
+      <mesh position={[frameWidth / 2 - BORDER / 2, 0, 0]}>
+        <boxGeometry args={[BORDER, frameHeight - BORDER * 2, FRAME_DEPTH]} />
         <meshStandardMaterial color={GOLD} metalness={0.6} roughness={0.3} />
       </mesh>
 
