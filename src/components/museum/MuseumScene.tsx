@@ -17,14 +17,13 @@ interface MuseumSceneProps {
 // --- Movement component (must be inside Canvas for useFrame) ---
 
 interface PlayerControllerProps {
-  moveInput: React.MutableRefObject<{ x: number; z: number }>;
   lookInput: React.MutableRefObject<{ dx: number; dy: number }>;
   totalRooms: number;
   initialPosition?: [number, number, number];
   initialYaw?: number;
 }
 
-function PlayerController({ moveInput, lookInput, totalRooms, initialPosition, initialYaw }: PlayerControllerProps) {
+function PlayerController({ lookInput, totalRooms, initialPosition, initialYaw }: PlayerControllerProps) {
   const { camera } = useThree();
   const yaw = useRef(initialYaw ?? 0);
   const pitch = useRef(0);
@@ -97,16 +96,9 @@ function PlayerController({ moveInput, lookInput, totalRooms, initialPosition, i
     if (keys.current.has('a') || keys.current.has('arrowleft')) kbDir.x -= 1;
     if (keys.current.has('d') || keys.current.has('arrowright')) kbDir.x += 1;
 
-    // Touch movement
-    const touchDir = moveInput.current;
-
-    // Combine inputs
-    const moveX = kbDir.x + touchDir.x;
-    const moveZ = kbDir.z - touchDir.z; // touch Y down = forward (positive Z in screen = negative Z in world)
-
     const movement = new THREE.Vector3();
-    movement.addScaledVector(forward, moveZ * speed);
-    movement.addScaledVector(right, moveX * speed);
+    movement.addScaledVector(forward, kbDir.z * speed);
+    movement.addScaledVector(right, kbDir.x * speed);
 
     // Apply movement
     camera.position.add(movement);
@@ -132,7 +124,6 @@ function PlayerController({ moveInput, lookInput, totalRooms, initialPosition, i
 // --- Main scene ---
 
 export default function MuseumScene({ drawings, playerName }: MuseumSceneProps) {
-  const moveInput = useRef({ x: 0, z: 0 });
   const lookInput = useRef({ dx: 0, dy: 0 });
   const totalRooms = Math.max(1, Math.ceil(drawings.length / PAINTINGS_PER_ROOM));
 
@@ -145,10 +136,6 @@ export default function MuseumScene({ drawings, playerName }: MuseumSceneProps) 
   const lastSlotIndex = drawings.length > 0 ? (drawings.length - 1) % PAINTINGS_PER_ROOM : 0;
   const isLeftWall = lastSlotIndex < PAINTINGS_PER_WALL;
   const initialYaw = isLeftWall ? -Math.PI / 2 : Math.PI / 2;
-
-  const handleMove = useCallback((x: number, z: number) => {
-    moveInput.current = { x, z };
-  }, []);
 
   const handleLook = useCallback((dx: number, dy: number) => {
     lookInput.current.dx += dx;
@@ -175,7 +162,6 @@ export default function MuseumScene({ drawings, playerName }: MuseumSceneProps) 
 
         {/* Player controller */}
         <PlayerController
-          moveInput={moveInput}
           lookInput={lookInput}
           totalRooms={totalRooms}
           initialPosition={initialPosition}
@@ -187,7 +173,7 @@ export default function MuseumScene({ drawings, playerName }: MuseumSceneProps) 
       </Canvas>
 
       {/* Touch controls overlay (mobile only) */}
-      <TouchControls onMove={handleMove} onLook={handleLook} />
+      <TouchControls onLook={handleLook} />
     </div>
   );
 }
