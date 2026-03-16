@@ -46,6 +46,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const lastSparklePos = useRef<{ x: number; y: number } | null>(null);
     const strokeSparkles = useRef<import('fabric').FabricObject[]>([]);
+    const isDrawing = useRef(false);
 
     // Expose imperative methods
     useImperativeHandle(ref, () => ({
@@ -137,6 +138,13 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
           strokeSparkles.current = [];
           lastSparklePos.current = null;
           canvas.requestRenderAll();
+        });
+
+        canvas.on('mouse:down', () => {
+          isDrawing.current = true;
+        });
+        canvas.on('mouse:up', () => {
+          isDrawing.current = false;
         });
 
         fabricRef.current = canvas;
@@ -262,7 +270,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
       if (!canvas || !sparkleEnabled) return;
 
       const onMouseMove = (opt: import('fabric').TPointerEventInfo) => {
-        if (!canvas.isDrawingMode || !(opt.e as PointerEvent).buttons) return;
+        if (!canvas.isDrawingMode || !isDrawing.current) return;
         const pointer = canvas.getScenePoint(opt.e);
         const last = lastSparklePos.current;
 
