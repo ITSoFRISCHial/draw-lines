@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 
 interface RainbowPickerProps {
   onColorSelect: (color: string) => void;
@@ -9,9 +9,9 @@ interface RainbowPickerProps {
 
 export default function RainbowPicker({ onColorSelect, onClose }: RainbowPickerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const lastColor = useRef<string | null>(null);
-  const [previewColor, setPreviewColor] = useState<string | null>(null);
 
   // Draw HSL gradient on mount
   useEffect(() => {
@@ -54,23 +54,33 @@ export default function RainbowPicker({ onColorSelect, onClose }: RainbowPickerP
     );
   }, []);
 
+  const showPreview = useCallback((color: string) => {
+    if (previewRef.current) {
+      previewRef.current.style.backgroundColor = color;
+      previewRef.current.style.border = 'none';
+    }
+    lastColor.current = color;
+  }, []);
+
+  const clearPreview = useCallback(() => {
+    if (previewRef.current) {
+      previewRef.current.style.backgroundColor = 'transparent';
+      previewRef.current.style.border = '2px dashed #4b5563';
+    }
+    lastColor.current = null;
+  }, []);
+
   const handlePointerDown = (e: React.PointerEvent) => {
     isDragging.current = true;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const color = sampleColor(e.clientX, e.clientY);
-    if (color) {
-      setPreviewColor(color);
-      lastColor.current = color;
-    }
+    if (color) showPreview(color);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging.current) return;
     const color = sampleColor(e.clientX, e.clientY);
-    if (color) {
-      setPreviewColor(color);
-      lastColor.current = color;
-    }
+    if (color) showPreview(color);
   };
 
   const handlePointerUp = () => {
@@ -79,8 +89,7 @@ export default function RainbowPicker({ onColorSelect, onClose }: RainbowPickerP
     if (lastColor.current) {
       onColorSelect(lastColor.current);
     }
-    setPreviewColor(null);
-    lastColor.current = null;
+    clearPreview();
   };
 
   return (
@@ -94,13 +103,14 @@ export default function RainbowPicker({ onColorSelect, onClose }: RainbowPickerP
           <div className="w-10 h-1 rounded-full bg-gray-500" />
         </div>
 
-        {/* Color preview rectangle */}
+        {/* Color preview rectangle — updated via DOM ref to avoid React re-render lag */}
         <div
-          className="w-full rounded-lg mb-2 transition-colors duration-75"
+          ref={previewRef}
+          className="w-full rounded-lg mb-2"
           style={{
             height: '2.5rem',
-            backgroundColor: previewColor ?? 'transparent',
-            border: previewColor ? 'none' : '2px dashed #4b5563',
+            backgroundColor: 'transparent',
+            border: '2px dashed #4b5563',
           }}
         />
 
