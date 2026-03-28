@@ -114,12 +114,20 @@ export default function RainbowPicker({ onColorSelect, onClose }: RainbowPickerP
           }}
         />
 
+        {/* White swatch — not reachable via the HSL gradient */}
+        <button
+          className="w-full rounded-lg mb-2 border-2 border-gray-500 cursor-pointer"
+          style={{ height: '2rem', backgroundColor: '#ffffff' }}
+          onClick={() => { onColorSelect('#ffffff'); onClose(); }}
+          aria-label="Select white"
+        />
+
         <canvas
           ref={canvasRef}
           width={360}
           height={200}
           className="w-full rounded-lg cursor-crosshair touch-none"
-          style={{ height: 'calc(100% - 24px - 2.5rem - 0.5rem)' }}
+          style={{ height: 'calc(100% - 24px - 2.5rem - 0.5rem - 2rem - 0.5rem)' }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
